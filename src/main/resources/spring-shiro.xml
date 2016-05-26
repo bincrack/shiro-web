@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<property name="securityManager" ref="securityManager"></property>
+		<property name="loginUrl" value="/user/login"/>
+		<property name="successUrl" value="/user/"/>
+		<property name="filters">
+			<map>
+				<entry key="webAuthz">
+					<bean class="com.uu.web.shiro.filter.WebAuthorizationFilter"></bean>
+				</entry>
+			</map>
+		</property>
+		<property name="filterChainDefinitions">
+			<value>
+				/user/login = anon
+				/** = authc, webAuthz
+			</value>
+		</property>
+	</bean>
+
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realms">
+        	<list>
+        		<bean class="com.uu.web.shiro.realm.WebAuthorizingRealm"></bean>
+        	</list>
+        </property>
+	</bean>
+
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager"></property>
+	</bean>
+</beans>

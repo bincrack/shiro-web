@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:soap="http://cxf.apache.org/bindings/soap"
+	xmlns:simple="http://cxf.apache.org/simple"
+	xmlns:http-conf="http://cxf.apache.org/transports/http/configuration"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/context 
+ 	http://www.springframework.org/schema/context/spring-context.xsd">
+	
+    <tx:annotation-driven transaction-manager="transactionManager" />
+ 	<aop:config expose-proxy="true"/>
+ 	<aop:aspectj-autoproxy expose-proxy="true" />
+ 	
+	<bean id="myDataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
+		<property name="driver"><value>${database.driverClass}</value></property>
+		<property name="driverUrl"><value>${database.jdbcUrl}</value></property>
+		<property name="user"><value>${database.user}</value></property>
+		<property name="password"><value>${database.password}</value></property>
+		<property name="alias" value="proxoolPool" />
+		<property name="prototypeCount" value="5" />
+		<property name="maximumConnectionCount" value="30" />
+		<property name="minimumConnectionCount" value="5" />
+		<property name="simultaneousBuildThrottle" value="15"/>
+		<property name="trace" value="false" />
+		<property name="verbose" value="false" />
+		<property name="houseKeepingSleepTime" value="90000"/>
+		<!-- 最大耗时时间，如果大于这个时间该连接都会被强制关闭 -->
+		<property name="maximumActiveTime" value="1800000"/>
+		<property name="testBeforeUse" value="false"/>
+	</bean>
+	
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="myDataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.cglib.use_reflection_optimizer">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop> 
+				<prop key="hibernate.query.substitutions">true 1,false 0,yes 'Y',no 'N'</prop>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">false</prop>
+				<prop key="hibernate.use_outer_join">true</prop>
+				<prop key="hibernate.jdbc.fetch_size">50</prop>
+				<prop key="hibernate.jdbc.use_streams_for_binary">true</prop>
+				<prop key="hibernate.cache.use_second_level_cache">false</prop>
+			</props>
+		</property>
+		<property name="packagesToScan" value="com.uu.web.entity"></property>
+	</bean>
+	
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config>
+		<aop:pointcut id="pManager" expression="execution(* com.uu.web.biz.*Manager.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="pManager" />
+	</aop:config>
+</beans>
