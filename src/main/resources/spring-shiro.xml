@@ -20,6 +20,7 @@
 		<property name="filterChainDefinitions">
 			<value>
 				/user/login = anon
+				/druid/** = anon
 				/** = authc, webAuthz
 			</value>
 		</property>
